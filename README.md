@@ -1,16 +1,20 @@
 # aws-api-security-demo
 
-Security implementations demonstrator for APIs created using AWS API Gateway and Lambda, deployed with TerraForm.
+Security implementations demonstrator for APIs created using AWS API Gateway and Lambda, deployed with Terraform.
 
 ---
 
 ## Overview
 
-Deploy a test API in AWS using the included TerraForm configuration files and Lambda source codes (Python3). The Lambda function returns the event details from API Gateway. You will need a working TerraForm account and installation. For easier setup, you can use TerraForm Cloud.
+Deploy a test API in AWS using the included Terraform configuration files and Lambda source codes (Python3). The Lambda function returns the event details from API Gateway. You will need a working Terraform account and installation. For easier setup, you can use Terraform Cloud.
 
 > **CHARGES MAY APPLY**
 
 The main purpose of this demonstrator is to show the different security compoments implemented to protect an API in the AWS environment. After deployment is complete, you can test the API with different inputs, enable / disable each security component, and see how each change affects the results.
+
+### Infrastructure Diagram
+
+![Infrastructure diagram](img/app_security.png)
 
 ## Prerequisites
 
@@ -22,7 +26,9 @@ The main purpose of this demonstrator is to show the different security compomen
 
 ## Caveat
 
-The API Gateway configuration in this deployment currently does not have a CORS setting, so trying to hit the endpoint using a web browser and some API testing tools like Postman and even Swagger may fail. You can add it manually after deployment in the [API Gateway](https://console.aws.amazon.com/apigateway/) console if you like.
+1. The API Gateway configuration in this deployment currently does not have a CORS setting, so trying to hit the endpoint using a web browser and some API testing tools like Postman and even Swagger may fail. You can add it manually after deployment in the [API Gateway](https://console.aws.amazon.com/apigateway/) console if you like.
+
+2. There is no database backend in this demonstrator. You can deploy one in your AWS account if you like to test data encryption-at-rest, and how it's related to AWS Key Management Service (KMS).
 
 ## Components
 
@@ -38,7 +44,7 @@ The API Gateway configuration in this deployment currently does not have a CORS 
 
 1. [backend.tf](backend.tf) - Cloud provider backend information (the one included here is for AWS)
 
-2. [provider.tf](provider.tf) - Provider details (credential variables, sensitive values stored securely and remotely in TerraForm Cloud)
+2. [provider.tf](provider.tf) - Provider details (credential variables, sensitive values stored securely and remotely in Terraform Cloud)
 
 3. [locals.tf](locals.tf) - Cloud-intrinsic variable definitions (AWS account ID, region. etc.)
 
@@ -48,7 +54,7 @@ The API Gateway configuration in this deployment currently does not have a CORS 
 
 ## Deployment
 
-Deploy with the standard *terraform apply* commands once you've setup and initialized TerraForm. The script will output the API endpoint, but you will need to obtain the API key from either the [API Gateway](https://console.aws.amazon.com/apigateway/) or [Lambda](https://console.aws.amazon.com/lambda/) console.
+Deploy with the standard *terraform apply* command once you've setup and initialized Terraform. The script will output the API endpoint, but you will need to obtain the API key from either the [API Gateway](https://console.aws.amazon.com/apigateway/) or [Lambda](https://console.aws.amazon.com/lambda/) console.
 
 ## Usage
 
