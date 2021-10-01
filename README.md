@@ -94,7 +94,7 @@ Deploy with the standard *terraform apply* command once you've setup and initial
 
 Here are some basic tests you can do to see how the different components work.
 
-1. The WAF rules block the "**://**" pattern from query string parameters to protect against inclusions. You can try using something like "**?code=12345**" vs. "**?code=http://12345**" while the WAF is enabled and disabled in the [API Gateway](https://console.aws.amazon.com/apigateway/) console to see the difference.
+1. The WAF rules block the "**://**" pattern from query string parameters to protect against inclusions. You can try using something like "**?code=12345**" vs. "**?code=http://12345**" while the WAF is enabled and disabled in the [API Gateway](https://console.aws.amazon.com/apigateway/) console (in the *Stage* configuration) to see the difference.
 
     > Remember to redeploy the API after making changes in the console. It may take a few minutes for the changes to take effect after redeployment.
 
