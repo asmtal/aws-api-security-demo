@@ -1,5 +1,40 @@
+resource "aws_iam_role" "iam_for_lambda" {
+  name               = format("%s_role", var.lambda_name)
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+                "Service": "lambda.amazonaws.com"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_lambda_function" "function" {
+  architectures    = ["arm64"]
+  filename         = "resources/lambda_function.zip"
+  function_name    = var.lambda_name
+  role             = aws_iam_role.iam_for_lambda.arn
+  handler          = "lambda_function.lambda_handler"
+  source_code_hash = filebase64sha256("resources/lambda_function.zip")
+  runtime          = "python3.9"
+  environment {
+    variables = {
+      ENCODING = "latin-1"
+      CORS     = "*"
+    }
+  }
+}
+
 resource "aws_api_gateway_rest_api" "api" {
-  name = "myapi"
+  name = var.api_name
 }
 
 resource "aws_api_gateway_model" "model" {
@@ -7,7 +42,7 @@ resource "aws_api_gateway_model" "model" {
   name         = "UserModel"
   description  = "Request schema model."
   content_type = "application/json"
-  schema = <<EOF
+  schema       = <<EOF
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "UserModel",
@@ -37,18 +72,18 @@ resource "aws_api_gateway_resource" "resource" {
 }
 
 resource "aws_api_gateway_method" "method" {
-  rest_api_id   = aws_api_gateway_rest_api.api.id
-  resource_id   = aws_api_gateway_resource.resource.id
-  http_method   = "POST"
-  authorization = "NONE"
+  rest_api_id      = aws_api_gateway_rest_api.api.id
+  resource_id      = aws_api_gateway_resource.resource.id
+  http_method      = "POST"
+  authorization    = "NONE"
   api_key_required = true
   request_models = {
     "application/json" = aws_api_gateway_model.model.name
   }
   request_parameters = {
-    "method.request.header.x-api-key" = true
+    "method.request.header.x-api-key"    = true
     "method.request.header.content-type" = true
-    "method.request.querystring.code" = true
+    "method.request.querystring.code"    = true
   }
   request_validator_id = aws_api_gateway_request_validator.validator.id
 }
@@ -59,7 +94,7 @@ resource "aws_api_gateway_integration" "integration" {
   http_method             = aws_api_gateway_method.method.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.test_lambda.invoke_arn
+  uri                     = aws_lambda_function.function.invoke_arn
 }
 
 resource "aws_api_gateway_method_response" "response_200" {
@@ -122,9 +157,9 @@ resource "aws_api_gateway_method_settings" "all" {
   method_path = "*/*"
 
   settings {
-    metrics_enabled = false
-    logging_level   = "OFF"
-    throttling_rate_limit = 1000
+    metrics_enabled        = false
+    logging_level          = "OFF"
+    throttling_rate_limit  = 1000
     throttling_burst_limit = 500
   }
 }
@@ -134,8 +169,8 @@ resource "aws_api_gateway_api_key" "api_key" {
 }
 
 resource "aws_api_gateway_usage_plan" "usage_plan" {
-  name         = "my_usage_plan"
-  description  = "API usage plan."
+  name        = "my_usage_plan"
+  description = "API usage plan."
 
   api_stages {
     api_id = aws_api_gateway_rest_api.api.id
@@ -160,15 +195,13 @@ resource "aws_api_gateway_usage_plan_key" "plan_key" {
   usage_plan_id = aws_api_gateway_usage_plan.usage_plan.id
 }
 
-resource "aws_wafv2_web_acl" "waf" {
-  name        = "StandardACL"
+resource "aws_wafv2_web_acl" "waf_regional" {
+  name        = var.waf_name
   description = "Standard WebACL for API Gateway, TerraForm deploy."
   scope       = "REGIONAL"
-
   default_action {
     allow {}
   }
-
   rule {
     name     = "AWSManagedRulesCommonRule"
     priority = 0
@@ -193,7 +226,6 @@ resource "aws_wafv2_web_acl" "waf" {
       sampled_requests_enabled   = false
     }
   }
-
   rule {
     name     = "AWSManagedRulesKnownBadInputsRule"
     priority = 1
@@ -212,7 +244,6 @@ resource "aws_wafv2_web_acl" "waf" {
       sampled_requests_enabled   = false
     }
   }
-
   rule {
     name     = "AWSManagedRulesAmazonIpReputation"
     priority = 2
@@ -231,7 +262,6 @@ resource "aws_wafv2_web_acl" "waf" {
       sampled_requests_enabled   = false
     }
   }
-
   visibility_config {
     cloudwatch_metrics_enabled = false
     metric_name                = "StandardACL"
@@ -241,53 +271,17 @@ resource "aws_wafv2_web_acl" "waf" {
 
 resource "aws_wafv2_web_acl_association" "waf_association" {
   resource_arn = aws_api_gateway_stage.stage.arn
-  web_acl_arn  = aws_wafv2_web_acl.waf.arn
+  web_acl_arn  = aws_wafv2_web_acl.waf_regional.arn
 }
 
 resource "aws_lambda_permission" "apigw_lambda" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.test_lambda.function_name
+  function_name = aws_lambda_function.function.function_name
   principal     = "apigateway.amazonaws.com"
 
   # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
   source_arn = "${aws_api_gateway_rest_api.api.execution_arn}/*/${aws_api_gateway_method.method.http_method}/${aws_api_gateway_resource.resource.path_part}"
-}
-
-resource "aws_iam_role" "iam_for_lambda" {
-  name = "tf_lambda_role"
-
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "sts:AssumeRole",
-            "Principal": {
-                "Service": "lambda.amazonaws.com"
-            },
-            "Effect": "Allow",
-            "Sid": ""
-        }
-    ]
-}
-EOF
-
-}
-
-resource "aws_lambda_function" "test_lambda" {
-  filename      = "resources/lambda_function.zip"
-  function_name = "tf_lambda"
-  role          = aws_iam_role.iam_for_lambda.arn
-  handler       = "lambda_function.lambda_handler"
-  source_code_hash = filebase64sha256("resources/lambda_function.zip")
-  runtime = "python3.9"
-  environment {
-    variables = {
-      ENCODING = "latin-1"
-      CORS = "*"
-    }
-  }
 }
 
 output "API_Endpoint" {

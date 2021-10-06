@@ -42,15 +42,13 @@ The main purpose of this demonstrator is to show the different security compomen
 
 ## Files
 
-1. [backend.tf](backend.tf) - Cloud provider backend information (the one included here is for AWS)
+1. [aws.tf](backend.tf) - Cloud provider details (the one included here is for AWS)
 
-2. [provider.tf](provider.tf) - Provider details (credential variables, sensitive values stored securely and remotely in Terraform Cloud)
+2. [variables.tf](locals.tf) - User variable definitions.
 
-3. [locals.tf](locals.tf) - Cloud-intrinsic variable definitions (AWS account ID, region. etc.)
+3. [main.tf](main.tf) - Main definitions for resources and outputs.
 
-4. [main.tf](main.tf) - Definitions for variables / parameters, resources, and outputs
-
-5. [resources/lambda_function.py](resources/lambda_function.py) - Python3 code for the backend Lambda function (will need to be ZIPped as *lambda_function.zip*)
+4. [resources/lambda_function.py](resources/lambda_function.py) - Python3 code for the backend Lambda function (will need to be ZIPped as *lambda_function.zip*)
 
 ## Deployment
 
