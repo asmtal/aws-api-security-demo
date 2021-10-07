@@ -48,7 +48,11 @@ The main purpose of this demonstrator is to show the different security compomen
 
 3. [main.tf](main.tf) - Main definitions for resources and outputs.
 
-4. [resources/lambda_function.py](resources/lambda_function.py) - Python3 code for the backend Lambda function (will need to be ZIPped as *lambda_function.zip*)
+4. [modules/lambda.tf](modules/lambda.tf) - Lambda function and role definitions.
+
+5. [modules/waf_regional.tf](modules/waf_regional.tf) - WAF WebACL definition.
+
+6. [resources/lambda_function.py](resources/lambda_function.py) - Python3 code for the backend Lambda function (will need to be ZIPped as *lambda_function.zip*)
 
 ## Deployment
 
