@@ -1,23 +1,4 @@
 resource "aws_api_gateway_rest_api" "api" {
-  # body = jsonencode({
-  #   openapi = "3.0.1"
-  #   info = {
-  #     title   = "example"
-  #     version = "1.0"
-  #   }
-  #   paths = {
-  #     "/path1" = {
-  #       get = {
-  #         x-amazon-apigateway-integration = {
-  #           httpMethod           = "GET"
-  #           payloadFormatVersion = "1.0"
-  #           type                 = "HTTP_PROXY"
-  #           uri                  = "https://ip-ranges.amazonaws.com/ip-ranges.json"
-  #         }
-  #       }
-  #     }
-  #   }
-  # })
   name        = var.api_name
   description = var.api_description
   endpoint_configuration {
@@ -86,14 +67,6 @@ resource "aws_api_gateway_integration" "options" {
   http_method          = "OPTIONS"
   type                 = "MOCK"
   passthrough_behavior = "WHEN_NO_MATCH"
-  #   # Transforms the incoming XML request to JSON
-  #   request_templates = {
-  #     "application/xml" = <<EOF
-  # {
-  #    "body" : $input.json('$')
-  # }
-  # EOF
-  #   }
   request_templates = {
     "application/json" : "{\"statusCode\": 200}"
   }
@@ -108,16 +81,6 @@ resource "aws_api_gateway_integration_response" "options" {
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
   }
-  #   # Transforms the backend JSON response to XML
-  #   response_templates = {
-  #     "application/xml" = <<EOF
-  # #set($inputRoot = $input.path('$'))
-  # <?xml version="1.0" encoding="UTF-8"?>
-  # <message>
-  #     $inputRoot.body
-  # </message>
-  # EOF
-  #   }
 }
 
 resource "aws_api_gateway_method" "method" {
@@ -155,22 +118,13 @@ resource "aws_api_gateway_method_response" "response_200" {
 
 resource "aws_api_gateway_deployment" "deployment" {
   rest_api_id = aws_api_gateway_rest_api.api.id
-
   triggers = {
-    # NOTE: The configuration below will satisfy ordering considerations,
-    #       but not pick up all future REST API changes. More advanced patterns
-    #       are possible, such as using the filesha1() function against the
-    #       Terraform configuration file(s) or removing the .id references to
-    #       calculate a hash against whole resources. Be aware that using whole
-    #       resources will show a difference after the initial implementation.
-    #       It will stabilize to only change when resources change afterwards.
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.resource.id,
       aws_api_gateway_method.method.id,
       aws_api_gateway_integration.integration.id,
     ]))
   }
-
   lifecycle {
     create_before_destroy = true
   }
@@ -186,7 +140,6 @@ resource "aws_api_gateway_method_settings" "all" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   stage_name  = aws_api_gateway_stage.stage.stage_name
   method_path = "*/*"
-
   settings {
     metrics_enabled        = false
     logging_level          = "OFF"
@@ -236,9 +189,7 @@ resource "aws_lambda_permission" "apigw_lambda" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.function.function_name
   principal     = "apigateway.amazonaws.com"
-
-  # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
-  source_arn = "${aws_api_gateway_rest_api.api.execution_arn}/*/${aws_api_gateway_method.method.http_method}/${aws_api_gateway_resource.resource.path_part}"
+  source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/${aws_api_gateway_method.method.http_method}/${aws_api_gateway_resource.resource.path_part}"
 }
 
 ## Outputs.
