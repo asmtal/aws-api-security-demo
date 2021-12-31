@@ -26,7 +26,7 @@ The main purpose of this demonstrator is to show the different security compomen
 
 ## Caveat
 
-1. The API Gateway configuration in this deployment currently does not have a CORS setting, so trying to hit the endpoint using a web browser and some API testing tools like Postman and even Swagger may fail. You can add it manually after deployment in the [API Gateway](https://console.aws.amazon.com/apigateway/) console if you like.
+1. ~~The API Gateway configuration in this deployment currently does not have a CORS setting, so trying to hit the endpoint using a web browser and some API testing tools like Postman and even Swagger may fail. You can add it manually after deployment in the [API Gateway](https://console.aws.amazon.com/apigateway/) console if you like.~~ CORS is now available.
 
 2. There is no database backend in this demonstrator. You can deploy one in your AWS account if you like to test data encryption-at-rest, and how it's related to AWS Key Management Service (KMS).
 

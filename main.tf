@@ -10,7 +10,7 @@ output "api_endpoint" {
   sensitive = false
 }
 
-# Tennis.
-module "tennis" {
-  source = "./modules/tennis"
-}
+# # Tennis.
+# module "tennis" {
+#   source = "./modules/tennis"
+# }
