@@ -40,22 +40,6 @@ The main purpose of this demonstrator is to show the different security compomen
 
 4. Python input validators
 
-## Files
-
-1. [aws.tf](aws.tf) - Cloud provider details (the one included here is for AWS)
-
-2. [main.tf](main.tf) - Main definitions for calling other elements.
-
-3. [modules/security_demo/variables.tf](modules/security_demo/variables.tf) - Variable definitions for the Security Demonstrator project.
-
-4. [modules/security_demo/api.tf](modules/security_demo/api.tf) - API definitions for the Security Demonstrator project.
-
-5. [modules/security_demo/lambda.tf](modules/security_demo/lambda.tf) - Lambda function and role definitions for the Security Demonstrator project.
-
-6. [modules/security_demo/waf_regional.tf](modules/security_demo/waf_regional.tf) - WAF WebACL definition for the Security Demonstrator project.
-
-7. [modules/security_demo/resources/lambda_function.py](modules/security_demo/resources/lambda_function.py) - Python3 code for the Security Demonstrator backend Lambda function (will need to be ZIPped as *lambda_function.zip*)
-
 ## Deployment
 
 Deploy with the standard *terraform apply* command once you've setup and initialized Terraform. The script will output the API endpoint, but you will need to obtain the API key from either the [API Gateway](https://console.aws.amazon.com/apigateway/) or [Lambda](https://console.aws.amazon.com/lambda/) console.
