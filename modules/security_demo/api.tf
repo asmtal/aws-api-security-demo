@@ -34,90 +34,9 @@ resource "aws_api_gateway_request_validator" "validator" {
   validate_request_parameters = true
 }
 
-resource "aws_api_gateway_resource" "resource" {
-  path_part   = "event"
-  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
-  rest_api_id = aws_api_gateway_rest_api.api.id
-}
-
-resource "aws_api_gateway_method" "options" {
-  rest_api_id      = aws_api_gateway_rest_api.api.id
-  resource_id      = aws_api_gateway_resource.resource.id
-  http_method      = "OPTIONS"
-  authorization    = "NONE"
-  api_key_required = false
-}
-resource "aws_api_gateway_method_response" "options" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.resource.id
-  http_method = aws_api_gateway_method.options.http_method
-  status_code = "200"
-  response_models = {
-    "application/json" = "Empty"
-  }
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = true
-    "method.response.header.Access-Control-Allow-Methods" = true
-    "method.response.header.Access-Control-Allow-Origin"  = true
-  }
-}
-resource "aws_api_gateway_integration" "options" {
-  rest_api_id          = aws_api_gateway_rest_api.api.id
-  resource_id          = aws_api_gateway_resource.resource.id
-  http_method          = "OPTIONS"
-  type                 = "MOCK"
-  passthrough_behavior = "WHEN_NO_MATCH"
-  request_templates = {
-    "application/json" : "{\"statusCode\": 200}"
-  }
-}
-resource "aws_api_gateway_integration_response" "options" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.resource.id
-  http_method = aws_api_gateway_integration.options.http_method
-  status_code = "200"
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
-  }
-}
-
-resource "aws_api_gateway_method" "method" {
-  rest_api_id      = aws_api_gateway_rest_api.api.id
-  resource_id      = aws_api_gateway_resource.resource.id
-  http_method      = "POST"
-  authorization    = "NONE"
-  api_key_required = true
-  request_models = {
-    "application/json" = aws_api_gateway_model.model.name
-  }
-  request_parameters = {
-    "method.request.header.x-api-key"    = true
-    "method.request.header.content-type" = true
-    "method.request.querystring.code"    = true
-  }
-  request_validator_id = aws_api_gateway_request_validator.validator.id
-}
-
-resource "aws_api_gateway_integration" "integration" {
-  rest_api_id             = aws_api_gateway_rest_api.api.id
-  resource_id             = aws_api_gateway_resource.resource.id
-  http_method             = aws_api_gateway_method.method.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.function.invoke_arn
-}
-
-resource "aws_api_gateway_method_response" "response_200" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.resource.id
-  http_method = aws_api_gateway_method.method.http_method
-  status_code = "200"
-}
-
 resource "aws_api_gateway_deployment" "deployment" {
   rest_api_id = aws_api_gateway_rest_api.api.id
+
   triggers = {
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.resource.id,
@@ -125,6 +44,7 @@ resource "aws_api_gateway_deployment" "deployment" {
       aws_api_gateway_integration.integration.id,
     ]))
   }
+
   lifecycle {
     create_before_destroy = true
   }
@@ -140,6 +60,7 @@ resource "aws_api_gateway_method_settings" "all" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   stage_name  = aws_api_gateway_stage.stage.stage_name
   method_path = "*/*"
+
   settings {
     metrics_enabled        = false
     logging_level          = "OFF"
@@ -192,7 +113,7 @@ resource "aws_lambda_permission" "apigw_lambda" {
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/${aws_api_gateway_method.method.http_method}/${aws_api_gateway_resource.resource.path_part}"
 }
 
-## Outputs.
+# Outputs.
 output "api_endpoint" {
   value     = "${aws_api_gateway_stage.stage.invoke_url}/${aws_api_gateway_resource.resource.path_part}"
   sensitive = false
